@@ -1,5 +1,6 @@
 stages:
   - build_env
+  - test
   - report  
   - build
   - publish
