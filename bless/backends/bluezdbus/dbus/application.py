@@ -8,7 +8,7 @@ from typing import List, Any, Callable, Optional, Union
 from dbus_next.aio import MessageBus, ProxyObject, ProxyInterface  # type: ignore
 from dbus_next.service import ServiceInterface  # type: ignore
 from dbus_next.signature import Variant  # type: ignore
-from dbus.errors import DBusError
+from dbus_next.errors import DBusError
 
 from bless.backends.bluezdbus.dbus.advertisement import (  # type: ignore
     Type,

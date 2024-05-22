@@ -1,11 +1,12 @@
 import setuptools  # type: ignore
+from bless import __version__
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="bless",
-    version="1.0.0",
+    version=__version__,
     author="Kevin Davis",
     author_email="kevincarrolldavis@gmail.com",
     description="A Bluetooth Low Energy Server supplement to Bleak",
