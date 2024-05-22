@@ -14,6 +14,8 @@ if TYPE_CHECKING:
         BlueZGattDescriptor
     )
 
+from logging import getLogger
+logger = getLogger(__name__)
 
 class Flags(Enum):
     BROADCAST = "broadcast"
@@ -118,9 +120,10 @@ class BlueZGattCharacteristic(ServiceInterface):
         bytes
             The bytes that is the value of the characteristic
         """
+        logger.debug('ReadValue for Characteristic %s', self._uuid)
         f = self._service.app.Read
         if f is None:
-            raise NotImplementedError()
+            raise NotImplementedError()        
         return f(self)
 
     @method()  # noqa: F722
@@ -136,6 +139,7 @@ class BlueZGattCharacteristic(ServiceInterface):
         options : Dict
             Some options for you to select from
         """
+        logger.debug('WriteValue for Characteristic %s', self._uuid)
         f = self._service.app.Write
         if f is None:
             raise NotImplementedError()
@@ -146,6 +150,7 @@ class BlueZGattCharacteristic(ServiceInterface):
         """
         Begin a subscription to the characteristic
         """
+        logger.debug('StartNotify for Characteristic %s', self._uuid)
         f = self._service.app.StartNotify
         if f is None:
             raise NotImplementedError()
@@ -157,6 +162,7 @@ class BlueZGattCharacteristic(ServiceInterface):
         """
         Stop a subscription to the characteristic
         """
+        logger.debug('StopNotify for Characteristic %s', self._uuid)
         f = self._service.app.StopNotify
         if f is None:
             raise NotImplementedError()

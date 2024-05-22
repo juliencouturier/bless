@@ -26,6 +26,10 @@ from bless.backends.characteristic import (  # type: ignore
     GATTAttributePermissions,
 )
 
+from logging import getLogger
+
+logger = getLogger(__name__)
+
 
 class BlessServerBlueZDBus(BaseBlessServer):
     """
@@ -37,6 +41,7 @@ class BlessServerBlueZDBus(BaseBlessServer):
         The name of the server that will be advertised]
 
     """
+    connection_count = 0
 
     def __init__(self, name: str, loop: Optional[AbstractEventLoop] = None, **kwargs):
         super(BlessServerBlueZDBus, self).__init__(loop=loop, **kwargs)
@@ -59,8 +64,8 @@ class BlessServerBlueZDBus(BaseBlessServer):
         self.app.Write = self.write
 
         # We don't need to define these
-        self.app.StartNotify = lambda x: None
-        self.app.StopNotify = lambda x: None
+        self.app.StartNotify = self.start_notify
+        self.app.StopNotify = self.stop_notify
 
         potential_adapter: Optional[ProxyObject] = await get_adapter(
             self.bus, self._adapter
@@ -261,3 +266,40 @@ class BlessServerBlueZDBus(BaseBlessServer):
             The value being requested to set
         """
         return self.write_request(char.UUID, bytearray(value))
+    
+    def start_notify(self, *args, **kwargs):
+        """
+        Start notify.
+        This function re-routes the start notify sent from the
+        BlueZGattApplication to the server function for re-route to the user
+        defined handler
+
+        Parameters
+        ----------
+        char : BlueZGattCharacteristic
+            The characteristic object involved in the request
+        value : bytearray
+            The value being requested to set
+        """
+        logger.debug('Start Notify : %s, %s', args, kwargs)
+        self.connection_count += 1
+        self.start_notify_request()
+
+    def stop_notify(self, *args, **kwargs):
+        """
+        Stop notify.
+        This function re-routes the stop notify sent from the
+        BlueZGattApplication to the server function for re-route to the user
+        defined handler
+
+        Parameters
+        ----------
+        char : BlueZGattCharacteristic
+            The characteristic object involved in the request
+        value : bytearray
+            The value being requested to set
+        """
+        logger.debug('Stop Notify : %s, %s', args, kwargs)
+        self.connection_count -= 1
+        self.stop_notify_request()
+            

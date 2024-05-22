@@ -17,7 +17,8 @@ from bless.exceptions import BlessError
 
 LOGGER = logging.getLogger(__name__)
 
-
+def empty_func():
+    pass
 class BaseBlessServer(abc.ABC):
     """
     The Server Interface for Bleak Backend
@@ -27,6 +28,7 @@ class BaseBlessServer(abc.ABC):
     services : Optional[BleakGATTServiceCollection]
         Used to manage services and characteristics that this server advertises
     """
+    gatt_trees : List[dict]= []
 
     def __init__(self, loop: Optional[AbstractEventLoop] = None, **kwargs):
         self.loop: AbstractEventLoop = loop if loop else asyncio.get_event_loop()
@@ -218,6 +220,7 @@ class BaseBlessServer(abc.ABC):
             A dictionary of services and characteristics where the keys are the
             uuids and the attributes are the properties
         """
+        self.gatt_trees.append(gatt_tree)
         for service_uuid, service_info in gatt_tree.items():
             await self.add_new_service(service_uuid)
             for char_uuid, char_info in service_info.items():
@@ -270,6 +273,18 @@ class BaseBlessServer(abc.ABC):
 
         self.write_request_func(characteristic, value)
 
+    def start_notify_request(self, *args, **kwargs):
+        """
+        Event "Start Notify"
+        """
+        self.start_notify_func()
+
+    def stop_notify_request(self, *args, **kwargs):
+        """
+        Event "Stop Notify"
+        """
+        self.stop_notify_func()
+
     @property
     def read_request_func(self) -> Callable[[Any], Any]:
         """
@@ -305,6 +320,43 @@ class BaseBlessServer(abc.ABC):
         Set the function to handle incoming write requests
         """
         self._callbacks["write"] = func
+
+
+    @property
+    def start_notify_func(self) -> Callable[[Any], Any]:
+        """
+        Return an instance of the function to handle incoming start notify
+        """
+        func: Optional[Callable[[Any], Any]] = self._callbacks.get("start_notify")
+        if func is not None:
+            return func
+        else:
+            return empty_func
+
+    @start_notify_func.setter
+    def start_notify_func(self, func: Callable):
+        """
+        Set the function to handle incoming start notify
+        """
+        self._callbacks["start_notify"] = func
+
+    @property
+    def stop_notify_func(self) -> Callable[[Any], Any]:
+        """
+        Return an instance of the function to handle incoming stop notify
+        """
+        func: Optional[Callable[[Any], Any]] = self._callbacks.get("stop_notify")
+        if func is not None:
+            return func
+        else:
+            return empty_func
+
+    @stop_notify_func.setter
+    def stop_notify_func(self, func: Callable):
+        """
+        Set the function to handle incoming stop notify
+        """
+        self._callbacks["stop_notify"] = func
 
     @staticmethod
     def is_uuid(uuid: str) -> bool:

@@ -1,5 +1,6 @@
 import re
 
+from logging import getLogger
 import bleak.backends.bluezdbus.defs as defs  # type: ignore
 
 from typing import List, Any, Callable, Optional, Union
@@ -7,6 +8,7 @@ from typing import List, Any, Callable, Optional, Union
 from dbus_next.aio import MessageBus, ProxyObject, ProxyInterface  # type: ignore
 from dbus_next.service import ServiceInterface  # type: ignore
 from dbus_next.signature import Variant  # type: ignore
+from dbus.errors import DBusError
 
 from bless.backends.bluezdbus.dbus.advertisement import (  # type: ignore
     Type,
@@ -18,6 +20,7 @@ from bless.backends.bluezdbus.dbus.characteristic import (  # type: ignore
     BlueZGattCharacteristic,
 )
 
+logger = getLogger(__name__)
 
 class BlueZGattApplication(ServiceInterface):
     """
@@ -203,9 +206,16 @@ class BlueZGattApplication(ServiceInterface):
             The adapter object to stop advertising
         """
         await self.set_name(adapter, "")
-        advertisement: BlueZLEAdvertisement = self.advertisements.pop()
+        try:
+            advertisement: BlueZLEAdvertisement = self.advertisements.pop()
+        except IndexError:
+            logger.warning('Stop advertising with no advertisement')
+            return
         iface: ProxyInterface = adapter.get_interface("org.bluez.LEAdvertisingManager1")
-        await iface.call_unregister_advertisement(advertisement.path)  # type: ignore
+        try:
+            await iface.call_unregister_advertisement(advertisement.path)  # type: ignore
+        except DBusError:
+            logger.warning('Unable to unregister advertisement %s', advertisement.path)
         self.bus.unexport(advertisement.path)
 
     async def is_connected(self) -> bool:
